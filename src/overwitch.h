@@ -115,6 +115,12 @@ typedef enum
   OW_ENGINE_OPTION_P2O_AUDIO = 2
 } ow_engine_option_t;
 
+typedef enum
+{
+  OW_ENGINE_PROTOCOL_V1 = 1,
+  OW_ENGINE_PROTOCOL_V2 = 2
+} ow_engine_protocol_version_t;
+
 struct ow_context
 {
   //Functions
@@ -142,10 +148,13 @@ struct ow_device_desc
 {
   uint16_t pid;
   char *name;
+  int protocol;
   int inputs;
   int outputs;
   char *input_track_names[OB_MAX_TRACKS];
   char *output_track_names[OB_MAX_TRACKS];
+  int custom_input_track_sizes[OB_MAX_TRACKS];
+  int custom_output_track_sizes[OB_MAX_TRACKS];
 };
 
 struct ow_usb_device
