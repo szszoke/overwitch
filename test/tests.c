@@ -5,25 +5,26 @@
 #include "../src/jclient.h"
 #include "../src/engine.h"
 
-#define OW_CONV_SCALE_32 (1.0f / (float) INT_MAX)
-#define BLOCKS 4
+#define BLOCKS 1
 #define TRACKS 6
 #define NFRAMES 64
 
 static const struct ow_device_desc TESTDEV_DESC_V1 = {
   .pid = 0,
-  .name = "Test",
   .protocol = 1,
+  .name = "Test",
   .inputs = TRACKS,
   .outputs = TRACKS,
   .input_track_names = {"T1", "T2", "T3", "T4", "T5", "T6"},
-  .output_track_names = {"T1", "T2", "T3", "T4", "T5", "T6"}
+  .custom_input_track_sizes = {4, 4, 4, 4, 4, 4},
+  .output_track_names = {"T1", "T2", "T3", "T4", "T5", "T6"},
+  .custom_output_track_sizes = {4, 4, 4, 4, 4, 4},
 };
 
 static const struct ow_device_desc TESTDEV_DESC_V2 = {
   .pid = 0,
-  .name = "Test",
   .protocol = 2,
+  .name = "Test",
   .inputs = TRACKS,
   .outputs = TRACKS,
   .input_track_names = {"T1", "T2", "T3", "T4", "T5", "T6"},
@@ -247,7 +248,7 @@ main (int argc, char *argv[])
 {
   int err;
 
-  debug_level = 2;
+//   debug_level = 2;
 
   if (CU_initialize_registry () != CUE_SUCCESS)
     {

@@ -89,49 +89,33 @@ inline void
 ow_engine_read_usb_input_blocks (struct ow_engine *engine)
 {
   int32_t hv;
-  char *s;
+  int8_t *s;
   struct ow_engine_usb_blk *blk;
   float *f = engine->o2h_transfer_buf;
 
   for (int i = 0; i < engine->blocks_per_transfer; i++)
     {
       blk = GET_NTH_INPUT_USB_BLK (engine, i);
-      s = (char *) blk->data;
+      s = (int8_t *) blk->data;
       for (int j = 0; j < OB_FRAMES_PER_BLOCK; j++)
 	{
-	  if (engine->device_desc.protocol == OW_ENGINE_PROTOCOL_V1)
+	  for (int k = 0; k < engine->device_desc.outputs; k++)
 	    {
-	      for (int k = 0; k < engine->device_desc.outputs; k++)
+	      int size = engine->device_desc.custom_output_track_sizes[k];
+
+	      memcpy (&hv, s, size);
+
+	      if (engine->device_desc.protocol == OW_ENGINE_PROTOCOL_V2
+		  && size == 4)
 		{
-		  hv = be32toh (*((int32_t *) s));
-		  *f = INT32_TO_FLOAT32_SCALE * hv;
-		  f++;
-		  s += sizeof (int32_t);
+		  hv >>= 8;
 		}
-	    }
-	  else
-	    {
-	      int *size = engine->device_desc.custom_output_track_sizes;
-	      for (int k = 0; k < engine->device_desc.outputs; k++)
-		{
-		  unsigned char *dst;
-		  if (*size == 4)
-		    {
-		      dst = (unsigned char *) &hv;
-		      memcpy (dst, s, *size);
-		    }
-		  else
-		    {
-		      dst = &((unsigned char *) &hv)[1];
-		      memcpy (dst, s, *size);
-		    }
-		  hv = be32toh (hv);
-		  hv <<= 8;
-		  *f = INT32_TO_FLOAT32_SCALE * hv;
-		  f++;
-		  s += *size;
-		  size++;
-		}
+
+	      hv = be32toh (hv);
+
+	      *f = hv / (float) INT32_MAX;
+	      f++;
+	      s += size;
 	    }
 	}
     }
@@ -198,36 +182,23 @@ ow_engine_write_usb_output_blocks (struct ow_engine *engine)
       s = (unsigned char *) blk->data;
       for (int j = 0; j < OB_FRAMES_PER_BLOCK; j++)
 	{
-	  if (engine->device_desc.protocol == OW_ENGINE_PROTOCOL_V1)
+	  for (int k = 0; k < engine->device_desc.inputs; k++)
 	    {
-	      for (int k = 0; k < engine->device_desc.inputs; k++)
+	      int size = engine->device_desc.custom_input_track_sizes[k];
+	      ov = (int32_t) (*f * INT32_MAX);
+
+	      if (engine->device_desc.protocol == OW_ENGINE_PROTOCOL_V2
+		  && size == 4)
 		{
-		  ov = htobe32 ((int32_t) (*f * INT32_MAX));
-		  *((int32_t *) s) = ov;
-		  f++;
-		  s += sizeof (int32_t);
-		}
-	    }
-	  else
-	    {
-	      int *size = engine->device_desc.custom_input_track_sizes;
-	      for (int k = 0; k < engine->device_desc.inputs; k++)
-		{
-		  ov = (int32_t) (*f * INT32_MAX);
 		  ov >>= 8;
-		  ov = htobe32 (ov);
-		  if (*size == 4)
-		    {
-		      memcpy (s, ((unsigned char *) (&ov)), *size);
-		    }
-		  else
-		    {
-		      memcpy (s, &((unsigned char *) (&ov))[1], *size);
-		    }
-		  f++;
-		  s += *size;
-		  size++;
 		}
+
+	      ov = htobe32 (ov);
+
+	      memcpy (s, &ov, size);
+
+	      f++;
+	      s += size;
 	    }
 	}
     }

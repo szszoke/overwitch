@@ -536,11 +536,6 @@ ow_get_device_desc_from_vid_pid (uint16_t vid, uint16_t pid,
 	}
       json_reader_end_member (reader);
 
-      if (device_desc->protocol == OW_ENGINE_PROTOCOL_V1)
-	{
-	  break;
-	}
-
       if (json_reader_read_member (reader, DEV_TAG_CUSTOM_INPUT_TRACK_SIZES))
 	{
 	  if (json_reader_is_array (reader))
@@ -620,9 +615,9 @@ ow_get_device_desc_from_vid_pid (uint16_t vid, uint16_t pid,
 		       DEV_TAG_CUSTOM_OUTPUT_TRACK_SIZES);
 	  json_reader_end_element (reader);
 
-	  for (int j = 0; j < device_desc->inputs; j++)
+	  for (int j = 0; j < device_desc->outputs; j++)
 	    {
-	      device_desc->custom_input_track_sizes[j] =
+	      device_desc->custom_output_track_sizes[j] =
 		OB_DEFAULT_SAMPLE_SIZE;
 	    }
 	}
